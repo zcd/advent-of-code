@@ -1,5 +1,6 @@
 (ql:quickload 'arrow-macros)
-(import 'arrow-macros:->>)
+(ql:quickload 'str)
+(use-package 'arrow-macros)
 
 (defun read-graph (lines)
   (loop with graph = (make-hash-table :test #'equalp)
@@ -19,12 +20,11 @@
 
 (defun gen-all-paths (nodes)
   (if nodes
-      (->> nodes
-        (mapcar (lambda (src)
-                  (mapcar (lambda (path)
-                            (cons src path))
-                          (gen-all-paths (remove src nodes :test #'equalp)))))
-        (reduce #'append))
+      (mapcan (lambda (src)
+                (mapcar (lambda (path)
+                          (cons src path))
+                        (gen-all-paths (remove src nodes :test #'equalp))))
+              nodes)
       '(())))
 
 (defun path-len (path graph &key (debug nil))
@@ -42,7 +42,7 @@
           (terpri)
         finally (return (values distance hops))))
 
-(defun day09-a (filename &key (debug nil))
+(defun day09 (filename &key (debug nil))
   (multiple-value-bind (graph nodes)
       (-> filename
         #'uiop:read-file-lines
